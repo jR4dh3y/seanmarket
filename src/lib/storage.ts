@@ -42,7 +42,7 @@ export async function saveSkins(skins: Skin[]): Promise<void> {
 
   if (token) {
     try {
-      await put(BLOB_URL_FILE, data, { access: 'public', token, addRandomSuffix: false });
+      await put(BLOB_URL_FILE, data, { access: 'public', token, addRandomSuffix: false, allowOverwrite: true });
     } catch (error) {
       console.error("Error saving to Vercel Blob:", error);
       throw error;

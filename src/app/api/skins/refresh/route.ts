@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSkins, saveSkins } from "@/lib/storage";
 import { fetchSkinPrice, fetchSkinImage } from "@/lib/steam-api";
 
+export const revalidate = 0;
+
 export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

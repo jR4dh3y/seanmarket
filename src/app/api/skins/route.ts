@@ -4,6 +4,8 @@ import { fetchSkinPrice, fetchSkinImage } from "@/lib/steam-api";
 import { extractMarketHashName } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const skins = await getSkins();

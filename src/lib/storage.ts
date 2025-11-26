@@ -18,11 +18,19 @@ export async function getSkins(): Promise<Skin[]> {
         return [];
       }
 
-      const response = await fetch(blob.downloadUrl);
+      // Fetch directly without any caching
+      const response = await fetch(blob.url, {
+        cache: 'no-store',
+      });
       
       if (response.ok) {
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          return Array.isArray(data) ? data : [];
+        } catch {
+          return [];
+        }
       }
       
       return [];

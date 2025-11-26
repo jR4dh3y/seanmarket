@@ -11,25 +11,14 @@ export async function getSkins(): Promise<Skin[]> {
 
   if (token) {
     try {
-      // List blobs with the specific prefix to find our file
-      const { blobs } = await list({ 
-        token,
-        prefix: BLOB_PATHNAME,
-      });
-      
-      // Find exact match
+      const { blobs } = await list({ token });
       const blob = blobs.find(b => b.pathname === BLOB_PATHNAME);
       
       if (!blob) {
         return [];
       }
 
-      // Fetch with cache busting - append random query to bypass CDN cache
-      const noCacheUrl = `${blob.url}${blob.url.includes('?') ? '&' : '?'}_=${Date.now()}-${Math.random()}`;
-      const response = await fetch(noCacheUrl, {
-        cache: 'no-store',
-        next: { revalidate: 0 },
-      } as RequestInit);
+      const response = await fetch(blob.downloadUrl);
       
       if (response.ok) {
         const data = await response.json();
@@ -42,7 +31,6 @@ export async function getSkins(): Promise<Skin[]> {
       return [];
     }
   } else {
-    // Fallback to local file
     try {
       const data = await fs.readFile(LOCAL_FILE_PATH, 'utf-8');
       return JSON.parse(data);
@@ -63,19 +51,18 @@ export async function saveSkins(skins: Skin[]): Promise<void> {
         token, 
         addRandomSuffix: false,
         allowOverwrite: true,
-        cacheControlMaxAge: 0, // Disable caching
       });
     } catch (error) {
       console.error("Error saving to Vercel Blob:", error);
       throw error;
     }
   } else {
-    // Fallback to local file
     try {
       await fs.writeFile(LOCAL_FILE_PATH, data);
     } catch (error) {
       console.error("Error saving to local file:", error);
-      throw new Error("Failed to save data. If running on Vercel, ensure BLOB_READ_WRITE_TOKEN is set.");
+      throw new Error("Failed to save data.");
     }
   }
+}
 }

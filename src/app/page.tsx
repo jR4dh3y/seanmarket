@@ -38,7 +38,7 @@ export default function Home() {
   // Fetch all tracked skins from API
   const fetchSkins = useCallback(async () => {
     try {
-      const response = await fetch("/api/skins");
+      const response = await fetch("/api/skins", { cache: 'no-store' });
       const data = await response.json();
       setSkins(data.skins || []);
     } catch (error) {

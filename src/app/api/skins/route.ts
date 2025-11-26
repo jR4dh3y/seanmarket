@@ -4,10 +4,16 @@ import { fetchSkinPrice, fetchSkinImage } from "@/lib/steam-api";
 import { extractMarketHashName } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const skins = await getSkins();
-    return NextResponse.json({ skins });
+    return NextResponse.json({ skins }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error: any) {
     console.error("Error fetching skins:", error);
     return NextResponse.json(
@@ -103,7 +109,11 @@ export async function DELETE(request: Request) {
     }
 
     await saveSkins(updatedSkins);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error("Error deleting skin:", error);
     return NextResponse.json(

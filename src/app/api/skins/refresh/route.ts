@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSkins, saveSkins } from "@/lib/storage";
 import { fetchSkinPrice, fetchSkinImage } from "@/lib/steam-api";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -42,7 +44,11 @@ export async function POST(request: Request) {
       }
 
       await saveSkins(skins);
-      return NextResponse.json({ skin: skins[skinIndex] });
+      return NextResponse.json({ skin: skins[skinIndex] }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
     } else {
       // Refresh all skins
       const updatedSkins = await Promise.all(
@@ -72,7 +78,11 @@ export async function POST(request: Request) {
       );
 
       await saveSkins(updatedSkins);
-      return NextResponse.json({ skins: updatedSkins });
+      return NextResponse.json({ skins: updatedSkins }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      });
     }
   } catch (error) {
     console.error("Error refreshing skins:", error);

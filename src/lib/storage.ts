@@ -1,41 +1,22 @@
-import { put, list } from '@vercel/blob';
+import { get } from '@vercel/edge-config';
 import { Skin } from './types';
 import fs from 'fs/promises';
 import path from 'path';
 
 const LOCAL_FILE_PATH = path.join(process.cwd(), 'skins.json');
-const BLOB_PATHNAME = 'skins.json';
+const EDGE_CONFIG_KEY = 'skins';
 
 export async function getSkins(): Promise<Skin[]> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const edgeConfigId = process.env.EDGE_CONFIG_ID;
+  const vercelApiToken = process.env.VERCEL_API_TOKEN;
 
-  if (token) {
+  if (edgeConfigId && vercelApiToken) {
     try {
-      const { blobs } = await list({ token });
-      const blob = blobs.find(b => b.pathname === BLOB_PATHNAME);
-      
-      if (!blob) {
-        return [];
-      }
-
-      // Fetch directly without any caching
-      const response = await fetch(blob.url, {
-        cache: 'no-store',
-      });
-      
-      if (response.ok) {
-        const text = await response.text();
-        try {
-          const data = JSON.parse(text);
-          return Array.isArray(data) ? data : [];
-        } catch {
-          return [];
-        }
-      }
-      
-      return [];
+      // Use the Edge Config SDK for reading (optimized, fast)
+      const skins = await get<Skin[]>(EDGE_CONFIG_KEY);
+      return skins || [];
     } catch (error) {
-      console.error("Error fetching from Vercel Blob:", error);
+      console.error("Error fetching from Edge Config:", error);
       return [];
     }
   } else {
@@ -49,24 +30,46 @@ export async function getSkins(): Promise<Skin[]> {
 }
 
 export async function saveSkins(skins: Skin[]): Promise<void> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  const data = JSON.stringify(skins, null, 2);
+  const edgeConfigId = process.env.EDGE_CONFIG_ID;
+  const vercelApiToken = process.env.VERCEL_API_TOKEN;
+  const teamId = process.env.VERCEL_TEAM_ID;
 
-  if (token) {
+  if (edgeConfigId && vercelApiToken) {
     try {
-      await put(BLOB_PATHNAME, data, { 
-        access: 'public', 
-        token, 
-        addRandomSuffix: false,
-        allowOverwrite: true,
+      // Use Vercel REST API for writing
+      const url = teamId 
+        ? `https://api.vercel.com/v1/edge-config/${edgeConfigId}/items?teamId=${teamId}`
+        : `https://api.vercel.com/v1/edge-config/${edgeConfigId}/items`;
+
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${vercelApiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: [
+            {
+              operation: 'upsert',
+              key: EDGE_CONFIG_KEY,
+              value: skins,
+            },
+          ],
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Edge Config API error:", errorData);
+        throw new Error(`Failed to save to Edge Config: ${response.status}`);
+      }
     } catch (error) {
-      console.error("Error saving to Vercel Blob:", error);
+      console.error("Error saving to Edge Config:", error);
       throw error;
     }
   } else {
     try {
-      await fs.writeFile(LOCAL_FILE_PATH, data);
+      await fs.writeFile(LOCAL_FILE_PATH, JSON.stringify(skins, null, 2));
     } catch (error) {
       console.error("Error saving to local file:", error);
       throw new Error("Failed to save data.");

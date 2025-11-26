@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * SkinCard Component
+ * Displays individual skin information with price comparison and action buttons.
+ * Features:
+ * - Shows skin image, name, and current pricing
+ * - Compares current price against 7-day average
+ * - Provides visual indicators for good/bad deals
+ * - Allows users to delete skins or refresh prices
+ */
+
 import { Skin } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +29,17 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
   const [deleting, setDeleting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Calculate price difference and percentage compared to 7-day average
   const priceDiff = skin.current_price - skin.average_price_7d;
   const priceDiffPercent = skin.average_price_7d > 0
     ? ((priceDiff / skin.average_price_7d) * 100).toFixed(1)
     : "0";
 
+  // Determine if the current price is a good or bad deal
   const isGoodDeal = priceDiff < 0;
   const isBadDeal = priceDiff > 0;
 
+  // Remove skin from tracking list
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -49,6 +62,7 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
     }
   };
 
+  // Fetch latest price data from Steam Market for this skin
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -72,34 +86,56 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
   const lastUpdatedDate = new Date(skin.last_updated);
   const timeAgo = getTimeAgo(lastUpdatedDate);
 
+  // Generate a Steam market image URL from the skin name if no image is available
+  const getImageUrl = () => {
+    if (skin.image && skin.image.length > 10) {
+      return skin.image;
+    }
+    // Fallback: use a placeholder
+    return `https://placehold.co/150x100/1a1a2e/ffffff?text=${encodeURIComponent(skin.market_hash_name.split('|')[0].trim())}`;
+  };
+
   return (
+    /* CARD CONTAINER - controls overall card styling and shadow */
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardContent className="p-0">
+      {/* CARD CONTENT WRAPPER - p-0 (no padding) | pl-4 (left padding on card) */}
+      <CardContent className="p-0 pl-4">
+        {/* FLEX CONTAINER - flex-col (mobile) md:flex-row (desktop layout) */}
         <div className="flex flex-col md:flex-row">
-          {/* Image section */}
+          
+          {/* ========== IMAGE SECTION ========== */}
+          {/* Controls: w-full md:w-48 (width) | h-32 md:h-auto (height) | p-4 (padding inside image box) */}
           <div className="relative w-full md:w-48 h-32 md:h-auto bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center p-4">
             <img
-              src={skin.image || "/placeholder-skin.png"}
+              src={getImageUrl()}
               alt={skin.market_hash_name}
               className="max-h-24 w-auto object-contain"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://via.placeholder.com/150?text=No+Image";
+                (e.target as HTMLImageElement).src = `https://placehold.co/150x100/1a1a2e/ffffff?text=${encodeURIComponent(skin.market_hash_name.split('|')[0].trim())}`;
               }}
             />
           </div>
 
-          {/* Content section */}
+          {/* ========== CONTENT SECTION ========== */}
+          {/* flex-1 (takes remaining space) | p-4 (internal padding for text) */}
           <div className="flex-1 p-4">
+            
+            {/* HEADER ROW - Skin name + Action buttons */}
             <div className="flex justify-between items-start gap-2">
               <div className="flex-1 min-w-0">
+                {/* SKIN TITLE - text-sm md:text-base (responsive font size) */}
                 <h3 className="font-semibold text-sm md:text-base truncate" title={skin.market_hash_name}>
                   {skin.market_hash_name}
                 </h3>
+                {/* LAST UPDATED TEXT */}
                 <p className="text-xs text-muted-foreground mt-1">
                   Updated {timeAgo}
                 </p>
               </div>
+              
+              {/* ACTION BUTTONS - gap-1 (space between buttons) */}
               <div className="flex gap-1">
+                {/* REFRESH BUTTON */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -109,6 +145,8 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
                 >
                   <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
                 </Button>
+                
+                {/* DELETE BUTTON */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -121,8 +159,11 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
               </div>
             </div>
 
-            {/* Price section */}
+            {/* ========== PRICE SECTION ========== */}
+            {/* mt-4 (top margin) | gap-4 (space between price boxes) */}
             <div className="mt-4 flex flex-wrap items-end gap-4">
+              
+              {/* CURRENT PRICE BOX */}
               <div>
                 <p className="text-xs text-muted-foreground">Current Price</p>
                 <p className="text-2xl font-bold">
@@ -130,6 +171,7 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
                 </p>
               </div>
 
+              {/* 7-DAY AVERAGE PRICE BOX */}
               <div>
                 <p className="text-xs text-muted-foreground">7D Average</p>
                 <p className="text-lg text-muted-foreground">
@@ -137,6 +179,7 @@ export function SkinCard({ skin, onDelete, onRefresh }: SkinCardProps) {
                 </p>
               </div>
 
+              {/* PRICE DIFFERENCE BADGE - ml-auto (pushes to right) */}
               <div className="ml-auto">
                 <Badge
                   variant={isGoodDeal ? "default" : isBadDeal ? "destructive" : "secondary"}

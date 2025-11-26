@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * Home Page Component
+ * Main dashboard for CS2 Skin Price Tracker application.
+ * Features:
+ * - Fetches and displays tracked skins from API
+ * - Provides add skin dialog for tracking new items
+ * - Shows statistics overview of portfolio
+ * - Allows batch refresh of all skin prices
+ * - Theme toggle (dark/light mode)
+ * - Individual skin management (delete, refresh)
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import { Skin } from "@/lib/types";
 import { AddSkinDialog } from "@/components/add-skin-dialog";
@@ -11,16 +23,19 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 export default function Home() {
+  // State management for skins, loading, and theme
   const [skins, setSkins] = useState<Skin[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // Prevent hydration mismatch by tracking mount state
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Fetch all tracked skins from API
   const fetchSkins = useCallback(async () => {
     try {
       const response = await fetch("/api/skins");
@@ -38,6 +53,7 @@ export default function Home() {
     fetchSkins();
   }, [fetchSkins]);
 
+  // Refresh prices for all tracked skins from Steam Market
   const handleRefreshAll = async () => {
     setRefreshing(true);
     try {
@@ -54,20 +70,21 @@ export default function Home() {
     }
   };
 
+  // Remove skin from local state when deleted
   const handleDeleteSkin = (id: string) => {
     setSkins((prev) => prev.filter((s) => s.id !== id));
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container flex h-16 items-center justify-between mx-auto px-4">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">SM</span>
+              <span className="text-primary-foreground font-bold text-sm">CS</span>
             </div>
-            <h1 className="text-xl font-bold">SeanMarket</h1>
+            <h1 className="text-xl font-bold">CS2 Market Tracker</h1>
           </div>
           <div className="flex items-center gap-2">
             {mounted && (
@@ -88,14 +105,14 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         {/* Hero Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold tracking-tight">
-            CS2 Skin Price Tracker
+            Current Prices of Your Tracked CS2 Skins
           </h2>
           <p className="text-muted-foreground mt-2">
-            Track Steam Market prices and find the best deals on your favorite skins.
+            Monitor real-time market prices and trends for your favorite CS2 skins.
           </p>
         </div>
 
@@ -131,7 +148,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-6 mt-8">
+      <footer className="border-t h-16 flex items-center shrink-0">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>
             Prices fetched from Steam Community Market. Data may be delayed.

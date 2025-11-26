@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSkins, saveSkins } from "@/lib/storage";
-import { fetchSkinPrice } from "@/lib/steam-api";
+import { fetchSkinPrice, fetchSkinImage } from "@/lib/steam-api";
 
 export async function POST(request: Request) {
   try {
@@ -21,10 +21,20 @@ export async function POST(request: Request) {
 
       const skin = skins[skinIndex];
       const priceData = await fetchSkinPrice(skin.market_hash_name);
+      
+      // Fetch image if missing or broken
+      let imageUrl = skin.image;
+      if (!imageUrl || imageUrl.endsWith("...") || imageUrl.includes("economy/image/...")) {
+        const fetchedImage = await fetchSkinImage(skin.market_hash_name);
+        if (fetchedImage) {
+          imageUrl = fetchedImage;
+        }
+      }
 
       if (priceData) {
         skins[skinIndex] = {
           ...skin,
+          image: imageUrl,
           current_price: priceData.price,
           average_price_7d: priceData.average,
           last_updated: Date.now(),
@@ -38,15 +48,26 @@ export async function POST(request: Request) {
       const updatedSkins = await Promise.all(
         skins.map(async (skin) => {
           const priceData = await fetchSkinPrice(skin.market_hash_name);
+          
+          // Fetch image if missing or broken
+          let imageUrl = skin.image;
+          if (!imageUrl || imageUrl.endsWith("...") || imageUrl.includes("economy/image/...")) {
+            const fetchedImage = await fetchSkinImage(skin.market_hash_name);
+            if (fetchedImage) {
+              imageUrl = fetchedImage;
+            }
+          }
+          
           if (priceData) {
             return {
               ...skin,
+              image: imageUrl,
               current_price: priceData.price,
               average_price_7d: priceData.average,
               last_updated: Date.now(),
             };
           }
-          return skin;
+          return { ...skin, image: imageUrl };
         })
       );
 

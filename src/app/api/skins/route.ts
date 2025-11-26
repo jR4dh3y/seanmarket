@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSkins, saveSkins } from "@/lib/storage";
-import { fetchSkinPrice } from "@/lib/steam-api";
+import { fetchSkinPrice, fetchSkinImage } from "@/lib/steam-api";
 import { extractMarketHashName } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 
@@ -54,10 +54,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch image from Steam
+    const imageUrl = await fetchSkinImage(marketHashName);
+
     const newSkin = {
       id: uuidv4(),
       market_hash_name: marketHashName,
-      image: `https://community.cloudflare.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEm1Rd6dd2j6fE8YXwjFK-_RY-Yjv0I4KVJFM5NQ7S-wK9yOa6hJ_p7pnJyCV9-n51KFYkzQ`,
+      image: imageUrl || "",
       current_price: priceData.price,
       average_price_7d: priceData.average,
       last_updated: Date.now(),

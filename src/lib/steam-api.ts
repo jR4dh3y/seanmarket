@@ -1,8 +1,13 @@
 import { SteamPriceOverview } from "./types";
+import { getSkinImage } from "./skin-images";
 
-const PROXY_URL = "https://corsproxy.io/?"; // Optional: Use a proxy if running client-side, but we are server-side.
 // Note: Steam blocks server-side requests from some DCs. We might need a proxy or just try direct.
 // For this demo, we'll try direct and handle errors.
+
+export async function fetchSkinImage(marketHashName: string): Promise<string | null> {
+  // Use the pre-built skin image cache from the CSGO API
+  return getSkinImage(marketHashName);
+}
 
 export async function fetchSkinPrice(marketHashName: string): Promise<{ price: number; average: number; currency: string } | null> {
   try {
@@ -11,7 +16,7 @@ export async function fetchSkinPrice(marketHashName: string): Promise<{ price: n
     // We will try to use the Steam Market API directly.
     
     const encodedName = encodeURIComponent(marketHashName);
-    const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=1&market_hash_name=${encodedName}`;
+    const url = `https://steamcommunity.com/market/priceoverview/?appid=730&currency=24&market_hash_name=${encodedName}`;
     
     const response = await fetch(url, {
       headers: {
@@ -41,7 +46,7 @@ export async function fetchSkinPrice(marketHashName: string): Promise<{ price: n
     return {
       price: current,
       average: median, // This is technically median, but serves the purpose for "average" comparison
-      currency: '$' // Assuming USD for now
+      currency: '₹' // Assuming INR for now
     };
   } catch (error) {
     console.error("Error fetching skin price:", error);

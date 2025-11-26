@@ -65,4 +65,3 @@ export async function saveSkins(skins: Skin[]): Promise<void> {
     }
   }
 }
-}

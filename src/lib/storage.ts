@@ -49,6 +49,11 @@ export async function saveSkins(skins: Skin[]): Promise<void> {
     }
   } else {
     // Fallback to local file
-    await fs.writeFile(LOCAL_FILE_PATH, data);
+    try {
+      await fs.writeFile(LOCAL_FILE_PATH, data);
+    } catch (error) {
+      console.error("Error saving to local file:", error);
+      throw new Error("Failed to save data. If running on Vercel, ensure BLOB_READ_WRITE_TOKEN is set.");
+    }
   }
 }

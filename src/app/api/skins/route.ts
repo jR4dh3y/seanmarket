@@ -8,10 +8,10 @@ export async function GET() {
   try {
     const skins = await getSkins();
     return NextResponse.json({ skins });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching skins:", error);
     return NextResponse.json(
-      { error: "Failed to fetch skins" },
+      { error: error.message || "Failed to fetch skins" },
       { status: 500 }
     );
   }
@@ -71,10 +71,10 @@ export async function POST(request: Request) {
     await saveSkins(updatedSkins);
 
     return NextResponse.json({ skin: newSkin });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error adding skin:", error);
     return NextResponse.json(
-      { error: "Failed to add skin" },
+      { error: error.message || "Failed to add skin" },
       { status: 500 }
     );
   }

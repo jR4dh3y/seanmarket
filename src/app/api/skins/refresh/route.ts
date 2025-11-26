@@ -44,11 +44,7 @@ export async function POST(request: Request) {
       }
 
       await saveSkins(skins);
-      return NextResponse.json({ skin: skins[skinIndex] }, {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-        },
-      });
+      return NextResponse.json({ skin: skins[skinIndex] });
     } else {
       // Refresh all skins
       const updatedSkins = await Promise.all(
@@ -78,11 +74,7 @@ export async function POST(request: Request) {
       );
 
       await saveSkins(updatedSkins);
-      return NextResponse.json({ skins: updatedSkins }, {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-        },
-      });
+      return NextResponse.json({ skins: updatedSkins });
     }
   } catch (error) {
     console.error("Error refreshing skins:", error);

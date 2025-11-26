@@ -9,11 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const skins = await getSkins();
-    return NextResponse.json({ skins }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+    return NextResponse.json({ skins });
   } catch (error: any) {
     console.error("Error fetching skins:", error);
     return NextResponse.json(
@@ -109,11 +105,7 @@ export async function DELETE(request: Request) {
     }
 
     await saveSkins(updatedSkins);
-    return NextResponse.json({ success: true }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting skin:", error);
     return NextResponse.json(

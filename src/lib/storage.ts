@@ -1,4 +1,4 @@
-import { put, list } from '@vercel/blob';
+import { put, list, del } from '@vercel/blob';
 import { Skin } from './types';
 import fs from 'fs/promises';
 import path from 'path';
@@ -15,7 +15,14 @@ export async function getSkins(): Promise<Skin[]> {
       const blob = blobs.find(b => b.pathname === BLOB_URL_FILE);
       
       if (blob) {
-        const response = await fetch(blob.url);
+        // Add cache-busting to prevent stale data
+        const cacheBustUrl = `${blob.url}?t=${Date.now()}`;
+        const response = await fetch(cacheBustUrl, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
         if (response.ok) {
           return await response.json();
         }
@@ -42,7 +49,15 @@ export async function saveSkins(skins: Skin[]): Promise<void> {
 
   if (token) {
     try {
-      await put(BLOB_URL_FILE, data, { access: 'public', token, addRandomSuffix: false, allowOverwrite: true });
+      // First, delete the old blob to ensure clean state
+      const { blobs } = await list({ token });
+      const existingBlob = blobs.find(b => b.pathname === BLOB_URL_FILE);
+      if (existingBlob) {
+        await del(existingBlob.url, { token });
+      }
+      
+      // Then create new blob
+      await put(BLOB_URL_FILE, data, { access: 'public', token, addRandomSuffix: false });
     } catch (error) {
       console.error("Error saving to Vercel Blob:", error);
       throw error;
